@@ -33,35 +33,41 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Verify project files
+      - name: Find Android project
         run: |
-          test -f settings.gradle.kts
-          test -f build.gradle.kts
-          test -f app/build.gradle.kts
-          test -f app/src/main/AndroidManifest.xml
-          test -f app/src/main/java/com/fflivemic/app/YouTubeRtmpConfig.kt
+          PROJECT_SETTINGS=$(find . -name settings.gradle.kts -not -path '*/.gradle/*' -print -quit)
+          if [ -z "$PROJECT_SETTINGS" ]; then
+            echo "ERROR: settings.gradle.kts not found"
+            find . -maxdepth 5 -type f | sort
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$PROJECT_SETTINGS")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Android project found: $PROJECT_DIR"
+          test -f "$PROJECT_DIR/build.gradle.kts"
+          test -f "$PROJECT_DIR/app/build.gradle.kts"
+          test -f "$PROJECT_DIR/app/src/main/AndroidManifest.xml"
 
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace assembleDebug
+        run: |
+          cd "$PROJECT_DIR"
+          gradle --no-daemon --stacktrace assembleDebug
 
       - name: Show APK SHA-1
         run: |
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs app/build/outputs/apk/debug/*.apk
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs "$PROJECT_DIR"/app/build/outputs/apk/debug/*.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FF-Live-Mic-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
