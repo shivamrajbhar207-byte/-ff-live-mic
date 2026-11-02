@@ -1,0 +1,38 @@
+FF LIVE MIC — Phase 0.8.1 source status
+
+Implemented in source:
+- RootEncoder 2.8.1 RtmpStream transport and ConnectChecker callbacks
+- ScreenSource(MediaProjection) -> RootEncoder H.264 video encoder
+- MixAudioSource(MediaProjection) -> microphone + permitted internal playback PCM mix -> AAC encoder (Android 10+)
+- RTMP/RTMPS publish URL assembled in memory from YouTube server URL + stream key
+- Foreground service lifecycle and Stop Live action in notification
+- Runtime permission handling for microphone and Android 13+ notifications
+- Stream key is masked, validated, not logged, and UI field cleared after handoff
+- Android 8/9 fallback: microphone-only audio
+
+Validation status:
+- Original ZIP archive CRC integrity checked successfully.
+- RTMP Kotlin character-literal bug corrected and source text verified.
+- Gradle workflow updated for Java 17, Android SDK 35, Gradle 8.9, and APK artifact upload.
+- Kotlin plugin and Java/Kotlin JVM targets aligned in Gradle configuration.
+- NOT built in this workspace: a full Android SDK/Gradle build has not been executed here.
+- NOT installed or tested on a physical Android device.
+- NOT tested against a real YouTube Live ingest endpoint.
+- No APK is included.
+
+Known runtime constraints:
+- Internal playback capture requires Android 10+ and app/game playback-capture eligibility.
+- H.264/AAC availability and performance depend on device MediaCodec implementations.
+- Network, thermal load, orientation, bitrate stability and audio levels require device testing.
+- Prefer RTMPS if YouTube Studio provides it; standard RTMP does not encrypt the stream key in transit.
+
+
+Phase 0.9.0 changes prepared in source (not yet Android-built):
+- Added Google Play services sign-in dependency and YouTube read-only OAuth scope.
+- Added Google account connect/disconnect controls.
+- Added YouTube Data API client to find the active broadcast liveChatId and poll liveChatMessages.list.
+- Added independently persisted APP CHAT and STREAM CHAT controls.
+- APP CHAT displays fetched viewer messages in the app.
+- STREAM CHAT selection is persisted in the UI, but compositing chat over the outgoing RTMP video is NOT implemented yet.
+- Requires the Google Cloud Android OAuth client to match the installed APK package and signing SHA-1; API enabled and the signed-in account must be a test user while OAuth publishing status is Testing.
+- This source update has not been built or tested on a device in this workspace.
